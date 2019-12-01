@@ -13,7 +13,7 @@ type Client struct {
 	port string
 }
 
-func connect(host string, port string) *Client {
+func Connect(host string, port string) *Client {
 	c, err := textproto.Dial("tcp4", host+":"+port)
 	if err != nil {
 		log.Fatal(err)
@@ -35,7 +35,7 @@ func connect(host string, port string) *Client {
 	}
 }
 
-func (c *Client) send(cmd string) string {
+func (c *Client) Send(cmd string) string {
 	log.Printf("Sending '%s'",cmd)
 	c.cn.PrintfLine(cmd)
 	resp,err := c.cn.ReadLine()
@@ -46,7 +46,7 @@ func (c *Client) send(cmd string) string {
 	return resp
 }
 
-func (c *Client) disconnect() {
+func (c *Client) Disconnect() {
 	log.Print("Closing connection")
 	c.cn.PrintfLine("close")
 	resp, err := c.cn.ReadLine()
