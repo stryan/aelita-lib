@@ -20,8 +20,13 @@ func Connect(host string, port string) *Client {
 		return nil
 	}
 	log.Print("Sending header to aelita")
+	id := c.Next()
+	c.StartRequest(id)
 	c.PrintfLine(PROTO)
+	c.EndRequest(id)
+	c.StartResponse(id)
 	resp, err := c.ReadLine()
+	c.EndResponse(id)
 	if err != nil {
 		log.Fatal(err)
 		return nil
@@ -37,18 +42,28 @@ func Connect(host string, port string) *Client {
 
 func (c *Client) Send(cmd string) string {
 	log.Printf("Sending '%s'",cmd)
+	id := c.cn.Next()
+	c.cn.StartRequest(id)
 	c.cn.PrintfLine(cmd)
+	c.cn.EndRequest(id)
+	c.cn.StartResponse(id)
 	resp,err := c.cn.ReadLine()
 	if err != nil {
 		log.Fatal("Could not send command")
-		return "Failed to send command"
+		resp = "Failed to send command"
 	}
+	c.cn.EndResponse(id)
 	return resp
 }
 
 func (c *Client) Disconnect() {
 	log.Print("Closing connection")
+	id := c.cn.Next()
+	c.cn.StartRequest(id)
 	c.cn.PrintfLine("close")
+	c.cn.EndRequest(id)
+
+	c.cn.StartResponse(id)
 	resp, err := c.cn.ReadLine()
 	if err != nil {
 		log.Fatal("Error closing connection")
@@ -59,5 +74,6 @@ func (c *Client) Disconnect() {
 	} else {
 		log.Print("Connection closed poorly")
 	}
+	c.cn.EndResponse(id)
 	c.cn.Close()
 }
