@@ -43,7 +43,7 @@ func Connect(host string, port string) *Client {
 }
 
 func (c *Client) Send(cmd string) uint {
-	log.Printf("Sending '%s'",cmd)
+	log.Printf("Sending 'CMD %s'",cmd)
 	id := c.cn.Next()
 	c.cn.StartRequest(id)
 	err := c.cn.PrintfLine("CMD "+cmd)
@@ -67,9 +67,11 @@ func (c *Client) Receive(id uint) string {
 	switch resp_s[0] {
 	case "ERR":
 		//return server error as is
+		c.cn.EndResponse(id)
 		return resp
 	case "CMD":
 		//TODO implement server commands
+		c.cn.EndResponse(id)
 		return "Response not implemented"
 	case "END":
 		//Server wants to end connection
@@ -79,6 +81,7 @@ func (c *Client) Receive(id uint) string {
 	case "DAT":
 		if len(resp_s) != 2 {
 			//DAT command but bad header
+			c.cn.EndResponse(id)
 			log.Fatal("Want to receive data, but data header malformed")
 		}
 		numData,err := strconv.Atoi(resp_s[1])
@@ -92,8 +95,10 @@ func (c *Client) Receive(id uint) string {
 				log.Fatal("Could not receive response")
 			}
 		}
+		c.cn.EndResponse(id)
 		return strings.Join(result,"\n")
 	default:
+		c.cn.EndResponse(id)
 		return "Server responded with an invalid header"
 	}
 }
@@ -102,7 +107,7 @@ func (c *Client) Disconnect() {
 	log.Print("Closing connection")
 	id := c.cn.Next()
 	c.cn.StartRequest(id)
-	c.cn.PrintfLine("close")
+	c.cn.PrintfLine("CMD close")
 	c.cn.EndRequest(id)
 
 	c.cn.StartResponse(id)
@@ -115,6 +120,7 @@ func (c *Client) Disconnect() {
 		log.Print("Connection closed cleanly")
 	} else {
 		log.Print("Connection closed poorly")
+		log.Printf("Aelita responded with %v",resp)
 	}
 	c.cn.EndResponse(id)
 	c.cn.Close()
