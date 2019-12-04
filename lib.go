@@ -5,7 +5,7 @@ import (
 	"net/textproto"
 )
 
-const PROTO = "aelita 0.1"
+const PROTOV = "0.1"
 
 type Client struct {
 	cn   *textproto.Conn
@@ -22,7 +22,7 @@ func Connect(host string, port string) *Client {
 	log.Print("Sending header to aelita")
 	id := c.Next()
 	c.StartRequest(id)
-	c.PrintfLine(PROTO)
+	c.PrintfLine("NEW aelita %v ",PROTOV)
 	c.EndRequest(id)
 	c.StartResponse(id)
 	resp, err := c.ReadLine()
@@ -31,7 +31,7 @@ func Connect(host string, port string) *Client {
 		log.Fatal(err)
 		return nil
 	}
-	if resp == "OK "+PROTO {
+	if resp == "OK aelita "+PROTOV {
 		log.Print("Connection established")
 		return &Client{c, host, port}
 	} else {
@@ -69,7 +69,7 @@ func (c *Client) Disconnect() {
 		log.Fatal("Error closing connection")
 		return
 	}
-	if resp == "END" {
+	if resp == "END aelita " + PROTOV {
 		log.Print("Connection closed cleanly")
 	} else {
 		log.Print("Connection closed poorly")
